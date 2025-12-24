@@ -1,4 +1,4 @@
-### 1. Multi-Label Chest X-Ray Disease Classifier
+###  Multi-Label Chest X-Ray Disease Classifier
 
 
 
@@ -176,31 +176,9 @@ This project is intended for academic and research purposes only. It is not a me
 
 ## Author
 
-**Md Ashraf Hussain**
+## Author
+
+**Md Ashraf Hussain**  
 Artificial Intelligence and Machine Learning
 
-```
 
----
-
-# IMPORTANT  
-If you paste this version and GitHub STILL shows the “copy” icon on every section, that means:
-
-✔ You added an **extra triple backtick** above or below the README  
-✔ OR GitHub cached an older version  
-
-To fix caching:
-
-### 1. Open README → Edit  
-### 2. Copy-paste the entire content **again**  
-### 3. Commit
-
----
-
-If you want, I can also:
-
-- Make a **README with table of contents**, badges, and screenshots  
-- Add a GitHub profile-level README for your account  
-
-Just tell me.
-```
