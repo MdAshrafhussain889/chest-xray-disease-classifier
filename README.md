@@ -1,5 +1,4 @@
 
-
 ```markdown
 # Multi-Label Chest X-Ray Disease Classifier
 
@@ -9,7 +8,7 @@ This project provides a Streamlit-based web application for multi-label classifi
 
 ## Overview
 
-This application analyses a chest X-ray image and predicts the likelihood of multiple diseases simultaneously. It uses a DenseNet121 architecture fine-tuned on the NIH ChestXRay14 dataset. The interface is built with Streamlit and runs entirely on the user's local machine.
+This application analyzes a chest X-ray image and predicts the likelihood of multiple diseases simultaneously. It uses a DenseNet121 architecture fine-tuned on the NIH ChestXRay14 dataset. The interface is built with Streamlit and runs entirely on the user's local machine.
 
 ---
 
@@ -166,13 +165,4 @@ Artificial Intelligence and Machine Learning
 
 ```
 
----
 
-If you want, I can also create:
-
-- A shorter README  
-- A more detailed research-style README  
-- A professional cover image/banner for GitHub  
-
-Just tell me.
-```
