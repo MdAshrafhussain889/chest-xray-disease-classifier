@@ -1,25 +1,4 @@
-Got it — your issue is happening because your README shows **code block icons** on the right side (the little square “copy” boxes), which only appear on GitHub when the content is inside **code blocks**.
-
-This means:
-
-✅ Your README was pasted correctly
-❌ BUT your opening or closing backticks were not aligned properly — causing GitHub to think a **large section** is inside a code block.
-
-That’s why the entire README is showing the “copy code” icon.
-
----
-
-# ✔ FIX: Use the version below
-
-This version is **100% clean**, **no broken fences**, **no extra backticks**, and **renders properly on GitHub**.
-
-👉 **Just copy–paste THIS EXACT README into GitHub.**
-
----
-
-# ✅ **FINAL CLEAN README (Correct Rendering)**
-
-### (No copy icons, no formatting break)
+ (No copy icons, no formatting break)
 
 ```markdown
 # Multi-Label Chest X-Ray Disease Classifier
