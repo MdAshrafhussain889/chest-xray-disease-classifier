@@ -1,7 +1,7 @@
 
 
 ```markdown
-# Multi-Label Chest X-Ray Disease Classifier
+#### Multi-Label Chest X-Ray Disease Classifier
 
 This project provides a Streamlit-based web application for multi-label classification of chest X-ray images using a fine-tuned DenseNet121 model. The model predicts 14 thoracic diseases and generates confidence scores, threshold-based decisions, and visualizations. No retraining is required.
 
