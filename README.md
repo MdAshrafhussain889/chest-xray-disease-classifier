@@ -1,4 +1,4 @@
-
+### 2. Create a Conda Environment
 
 ```markdown
 #### Multi-Label Chest X-Ray Disease Classifier
