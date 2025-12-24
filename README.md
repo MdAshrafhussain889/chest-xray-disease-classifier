@@ -1,7 +1,4 @@
-Here is your **entire README.md** in clean, formal, **copy-paste** format.
-No emojis. No icons. Professional and consistent.
 
----
 
 ```markdown
 # Multi-Label Chest X-Ray Disease Classifier
