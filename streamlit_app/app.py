@@ -1,287 +1,254 @@
 import streamlit as st
 import numpy as np
 import cv2
-from PIL import Image
-import io
-from model_loader import ChestXRayModel
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# ============================================================================
-# PAGE CONFIGURATION
-# ============================================================================
+from model_loader import ChestXRayModel
+
+# =============================================================================
+# PAGE CONFIG
+# =============================================================================
 st.set_page_config(
     page_title="Multi-Label Chest X-Ray Disease Classifier",
-    page_icon=None,
     layout="wide"
 )
 
-# Custom CSS for professional appearance
-st.markdown("""
-    <style>
-    /* Center and style the main title */
-    .main-title {
-        text-align: center;
-        font-size: 2.5em;
-        font-weight: bold;
-        margin-bottom: 0px;
-        color: white;
-    }
+# =============================================================================
+# THEME TOGGLE
+# =============================================================================
+dark_mode = st.toggle("Dark Mode", value=False)
 
-    .subtitle {
-        text-align: center;
-        font-size: 0.95em;
-        margin-top: 5px;
-        margin-bottom: 20px;
-        color: #e0e0e0;
-    }
+bg = "#0b1220" if dark_mode else "#f8fafc"
+text = "#e5e7eb" if dark_mode else "#0f172a"
+card = "#1e293b" if dark_mode else "#e7f3ff"
 
-    .disease-badge {
-        background-color: #e7f3ff;
-        color: #0066cc;
-        padding: 12px 20px;
-        border-radius: 4px;
-        display: block;
-        margin: 8px 0;
-        font-weight: 700;
-        width: fit-content;
-        min-width: 300px;
-        text-align: center;
-        border: 1px solid #b3d9ff;
-    }
+# =============================================================================
+# CUSTOM CSS
+# =============================================================================
+st.markdown(f"""
+<style>
+.stApp {{
+    background-color: {bg};
+    color: {text};
+}}
 
-    /* Highlight rows with YES status */
-    tbody tr:has([data-status="YES"]) {
-        background-color: rgba(76, 175, 80, 0.15) !important;
-    }
+/* ================= HEADER ================= */
+.header-card {{
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    padding: 22px 26px;
+    border-radius: 14px;
+    text-align: center;
+    margin-bottom: 22px;
+}}
 
-    </style>
+.header-title {{
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: white;
+}}
+
+.header-subtitle {{
+    font-size: 0.95rem;
+    color: #dbeafe;
+    margin-top: 6px;
+}}
+
+/* ================= DISEASE TAG ================= */
+.disease-badge {{
+    background-color: {card};
+    color: #2563eb;
+    padding: 10px 18px;
+    border-radius: 8px;
+    margin: 6px 0;
+    font-weight: 600;
+    min-width: 280px;
+    text-align: center;
+}}
+
+/* ================= BUTTONS ================= */
+.stButton > button {{
+    background-color: #2563eb;
+    color: white;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border: none;
+}}
+
+.stButton > button:hover {{
+    background-color: #1e40af;
+    color: white;
+}}
+
+.stButton > button:focus {{
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.4);
+}}
+
+/* ================= DIVIDER ================= */
+hr {{
+    margin-top: 1.2rem;
+    margin-bottom: 1.2rem;
+}}
+</style>
 """, unsafe_allow_html=True)
 
-# ============================================================================
-# LOAD MODEL (CACHED)
-# ============================================================================
+# =============================================================================
+# LOAD MODEL
+# =============================================================================
 @st.cache_resource
-def load_model_cached():
-    """Load model once and cache it."""
-    try:
-        model = ChestXRayModel(
-            model_path="final_densenet121_model.h5",
-            metadata_path="model_metadata.json",
-            thresholds_path="optimal_thresholds.npy",
-            class_weights_path="class_weights.npy"
-        )
-        return model, None
-    except Exception as e:
-        return None, str(e)
+def load_model():
+    return ChestXRayModel(
+        model_path="final_densenet121_model.h5",
+        metadata_path="model_metadata.json",
+        thresholds_path="optimal_thresholds.npy",
+        class_weights_path="class_weights.npy"
+    )
 
-# ============================================================================
+# =============================================================================
 # MAIN APPLICATION
-# ============================================================================
+# =============================================================================
 def main():
-    # CENTERED TITLE - BIG AND BOLD
-    st.markdown(
-        '<div class="main-title">Multi-Label Chest X-Ray Disease Classifier</div>',
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        '<div class="subtitle">Model: Fine-tuned DenseNet121 | Purpose: Academic and research use only</div>',
-        unsafe_allow_html=True
-    )
 
-    st.divider()
+    # ---------------- HEADER ----------------
+    st.markdown("""
+    <div class="header-card">
+        <div class="header-title">Multi-Label Chest X-Ray Disease Classifier</div>
+        <div class="header-subtitle">
+            Fine-tuned DenseNet121 | Academic & Research Use Only
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Load Model
-    model, error = load_model_cached()
+    model = load_model()
 
-    if error:
-        st.error(f"Failed to load model: {error}")
-        st.info("Ensure all model files are in the same directory as app.py")
-        return
+    col_left, col_right = st.columns([1.2, 1.8], gap="large")
 
-    # ====================================================================
-    # LAYOUT: LEFT COLUMN (IMAGE) | RIGHT COLUMN (ANALYSIS)
-    # ====================================================================
-    col_upload, col_analysis = st.columns([1.2, 1.8], gap="large")
-
-    # LEFT COLUMN: IMAGE UPLOAD AND DISPLAY
-    with col_upload:
+    # -------------------------------------------------------------------------
+    # LEFT COLUMN: IMAGE UPLOAD
+    # -------------------------------------------------------------------------
+    with col_left:
         st.subheader("Image Upload")
 
-        st.write("**Supported:** PNG, JPG, JPEG")
-
         uploaded_file = st.file_uploader(
-            "Select X-ray image",
+            "Upload Chest X-ray Image",
             type=["png", "jpg", "jpeg"],
             label_visibility="collapsed"
         )
 
         if uploaded_file is None:
-            st.info(" Upload a chest X-ray image")
+            st.info("Upload a chest X-ray image to begin analysis")
             return
 
-        # Process image
-        image_data = uploaded_file.read()
-        image_array = np.frombuffer(image_data, np.uint8)
+        image_bytes = uploaded_file.read()
+        image_array = np.frombuffer(image_bytes, np.uint8)
         image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
 
         if image is None:
-            st.error("Could not process image")
+            st.error("Invalid image file")
             return
 
-        # Display image
-        st.image(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), use_column_width=True)
+        st.image(
+            cv2.cvtColor(image, cv2.COLOR_BGR2RGB),
+            width="stretch"
+        )
 
+    # -------------------------------------------------------------------------
     # RIGHT COLUMN: ANALYSIS RESULTS
-    with col_analysis:
+    # -------------------------------------------------------------------------
+    with col_right:
         st.subheader("Analysis Results")
 
-        try:
-            with st.spinner("Analyzing image..."):
-                detected_diseases, raw_scores, all_scores = model.predict(
-                    image,
-                    return_all_scores=True
-                )
-
-            # Display predicted diseases in COLUMN FORMAT with UNIFORM SIZE
-            if detected_diseases:
-                st.markdown("**Predicted Diseases:**")
-                for disease in detected_diseases:
-                    st.markdown(
-                        f"<div class='disease-badge'>{disease['disease']}</div>", 
-                        unsafe_allow_html=True
-                    )
-            else:
-                st.info("No abnormality found")
-
-            st.markdown("")
-
-            # Store results in session state for later use
-            st.session_state.detected_diseases = detected_diseases
-            st.session_state.all_scores = all_scores
-            st.session_state.model_thresholds = model.thresholds if hasattr(model, 'thresholds') else [0.5] * len(model.class_names)
-            st.session_state.model_class_names = model.class_names
-
-        except Exception as e:
-            st.error(f"Analysis error: {e}")
-
-    # ====================================================================
-    # NAVIGATION BUTTONS
-    # ====================================================================
-    st.divider()
-
-    st.markdown("### View Analysis Details")
-
-    col_btn1, col_btn2, col_spacer = st.columns([1, 1, 2])
-
-    with col_btn1:
-        if st.button("Detailed Results", use_container_width=True, key="btn_results"):
-            st.session_state.show_detailed = True
-            st.session_state.show_visualization = False
-
-    with col_btn2:
-        if st.button("Model Output Scores", use_container_width=True, key="btn_scores"):
-            st.session_state.show_visualization = True
-            st.session_state.show_detailed = False
-
-    st.divider()
-
-    # ====================================================================
-    # DETAILED RESULTS SECTION
-    # ====================================================================
-    if st.session_state.get("show_detailed", False):
-        st.markdown("### Detailed Results (All 14 Classes)")
-
-        try:
-            # Create results dataframe with YES/NO status
-            results_data = []
-            for i, class_name in enumerate(st.session_state.model_class_names):
-                score = st.session_state.all_scores[class_name]
-                threshold = st.session_state.model_thresholds[i]
-
-                # Show "YES" if exceeded, "NO" if not
-                status = "YES" if score >= threshold else "NO"
-
-                results_data.append({
-                    "Disease": class_name,
-                    "Model Score": f"{score:.4f}",
-                    "Threshold": f"{threshold:.4f}",
-                    "Status": status
-                })
-
-            df = pd.DataFrame(results_data)
-
-            # Display table with highlighting for YES rows
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True,
-                height=500
+        with st.spinner("Analyzing image..."):
+            detected, _, all_scores = model.predict(
+                image,
+                return_all_scores=True
             )
 
-            # Add custom CSS for row highlighting
-            st.markdown("""
-            <script>
-            const cells = document.querySelectorAll('td');
-            cells.forEach(cell => {
-                if (cell.textContent.trim() === 'YES') {
-                    cell.closest('tr').style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
-                }
-            });
-            </script>
-            """, unsafe_allow_html=True)
+        if detected:
+            st.markdown("**Predicted Diseases**")
+            for d in detected:
+                st.markdown(
+                    f"<div class='disease-badge'>{d['disease']}</div>",
+                    unsafe_allow_html=True
+                )
+        else:
+            st.info("No abnormal findings detected")
 
-        except Exception as e:
-            st.error(f"Error displaying results: {e}")
+        st.session_state.all_scores = all_scores
+        st.session_state.thresholds = model.thresholds
+        st.session_state.class_names = model.class_names
 
-    # ====================================================================
-    # VISUALIZATION SECTION
-    # ====================================================================
-    if st.session_state.get("show_visualization", False):
+    # -------------------------------------------------------------------------
+    # NAVIGATION BUTTONS
+    # -------------------------------------------------------------------------
+    st.divider()
+    col1, col2, _ = st.columns([1, 1, 2])
+
+    if col1.button("Detailed Results", use_container_width=True):
+        st.session_state.view = "details"
+
+    if col2.button("Model Scores", use_container_width=True):
+        st.session_state.view = "scores"
+
+    # -------------------------------------------------------------------------
+    # DETAILED RESULTS TABLE
+    # -------------------------------------------------------------------------
+    if st.session_state.get("view") == "details":
+        st.markdown("### Detailed Results")
+
+        rows = []
+        for i, name in enumerate(st.session_state.class_names):
+            score = st.session_state.all_scores[name]
+            threshold = st.session_state.thresholds[i]
+
+            rows.append({
+                "Disease": name,
+                "Score": round(score, 4),
+                "Threshold": round(threshold, 4),
+                "Status": "YES" if score >= threshold else "NO"
+            })
+
+        df = pd.DataFrame(rows)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+
+    # -------------------------------------------------------------------------
+    # MODEL SCORE VISUALIZATION
+    # -------------------------------------------------------------------------
+    if st.session_state.get("view") == "scores":
         st.markdown("### Model Output Scores")
-        st.write("Comparison of model scores vs decision thresholds for each disease class")
 
-        try:
-            fig, ax = plt.subplots(figsize=(12, 5))
+        fig, ax = plt.subplots(figsize=(12, 5))
+        diseases = list(st.session_state.all_scores.keys())
+        scores = list(st.session_state.all_scores.values())
+        thresholds = st.session_state.thresholds
 
-            diseases = list(st.session_state.all_scores.keys())
-            scores = list(st.session_state.all_scores.values())
-            thresholds = st.session_state.model_thresholds
+        x = np.arange(len(diseases))
+        colors = [
+            "#22c55e" if scores[i] >= thresholds[i] else "#9ca3af"
+            for i in range(len(scores))
+        ]
 
-            x_pos = np.arange(len(diseases))
+        ax.bar(x, scores, color=colors)
+        ax.plot(x, thresholds, linestyle="--", linewidth=2)
 
-            # Create bars with color based on threshold exceeded
-            colors = ['#4CAF50' if scores[i] >= thresholds[i] else '#9E9E9E' 
-                     for i in range(len(scores))]
+        ax.set_xticks(x)
+        ax.set_xticklabels(diseases, rotation=45, ha="right")
+        ax.set_ylim(0, 1)
+        ax.set_ylabel("Probability Score")
+        ax.set_title("Score vs Threshold Comparison")
+        ax.grid(axis="y", alpha=0.3)
 
-            ax.bar(x_pos, scores, label="Model Score", alpha=0.85, color=colors)
-            ax.plot(x_pos, thresholds, 'r--', linewidth=2.5, marker='o', 
-                   markersize=6, label="Decision Threshold")
+        st.pyplot(fig)
 
-            ax.set_xlabel("Disease Class", fontsize=11, fontweight='bold')
-            ax.set_ylabel("Score Value", fontsize=11, fontweight='bold')
-            ax.set_title("Disease Score vs Threshold Comparison", fontsize=12, fontweight='bold')
-            ax.set_xticks(x_pos)
-            ax.set_xticklabels(diseases, rotation=45, ha='right', fontsize=9)
-            ax.legend(fontsize=10, loc='upper right')
-            ax.grid(axis='y', alpha=0.3, linestyle='--')
-            ax.set_ylim(0, 1.0)
+# =============================================================================
+# SESSION STATE
+# =============================================================================
+if "view" not in st.session_state:
+    st.session_state.view = None
 
-            plt.tight_layout()
-            st.pyplot(fig)
-        except Exception as e:
-            st.error(f"Visualization error: {e}")
-
-# ============================================================================
-# INITIALIZE SESSION STATE
-# ============================================================================
-if "show_detailed" not in st.session_state:
-    st.session_state.show_detailed = False
-if "show_visualization" not in st.session_state:
-    st.session_state.show_visualization = False
-
-# ============================================================================
-# APPLICATION ENTRY POINT
-# ============================================================================
+# =============================================================================
+# RUN APP
+# =============================================================================
 if __name__ == "__main__":
     main()
