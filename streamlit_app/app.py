@@ -21,7 +21,6 @@ dark_mode = st.toggle("Dark Mode", value=False)
 
 bg = "#0b1220" if dark_mode else "#f8fafc"
 text = "#e5e7eb" if dark_mode else "#0f172a"
-card = "#1e293b" if dark_mode else "#e7f3ff"
 
 # =============================================================================
 # CUSTOM CSS
@@ -36,59 +35,64 @@ st.markdown(f"""
 /* ================= HEADER ================= */
 .header-card {{
     background: linear-gradient(135deg, #2563eb, #1e40af);
-    padding: 22px 26px;
-    border-radius: 14px;
+    padding: 24px 28px;
+    border-radius: 16px;
     text-align: center;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
 }}
 
 .header-title {{
-    font-size: 2.2rem;
+    font-size: 2.4rem;
     font-weight: 700;
     color: white;
 }}
 
 .header-subtitle {{
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: #dbeafe;
     margin-top: 6px;
 }}
 
-/* ================= DISEASE TAG ================= */
+/* ================= DISEASE BADGE ================= */
 .disease-badge {{
-    background-color: {card};
-    color: #2563eb;
-    padding: 10px 18px;
-    border-radius: 8px;
-    margin: 6px 0;
-    font-weight: 600;
-    min-width: 280px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #ffffff;
+    padding: 16px 24px;
+    border-radius: 14px;
+    margin: 12px 0;
+    font-weight: 700;
+    font-size: 1.3rem;
+    min-width: 340px;
     text-align: center;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.35);
+}}
+
+/* ================= INFO BOX ================= */
+.info-box {{
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #ffffff;
+    padding: 16px 22px;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 12px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35);
 }}
 
 /* ================= BUTTONS ================= */
 .stButton > button {{
     background-color: #2563eb;
     color: white;
-    border-radius: 12px;
+    border-radius: 14px;
     font-weight: 600;
-    padding: 10px 16px;
+    padding: 12px 18px;
     border: none;
 }}
 
 .stButton > button:hover {{
     background-color: #1e40af;
-    color: white;
-}}
-
-.stButton > button:focus {{
-    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.4);
-}}
-
-/* ================= DIVIDER ================= */
-hr {{
-    margin-top: 1.2rem;
-    margin-bottom: 1.2rem;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -115,7 +119,7 @@ def main():
     <div class="header-card">
         <div class="header-title">Multi-Label Chest X-Ray Disease Classifier</div>
         <div class="header-subtitle">
-            Fine-tuned DenseNet121 | Academic & Research Use Only
+             Academic & Research Use Only
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -137,7 +141,10 @@ def main():
         )
 
         if uploaded_file is None:
-            st.info("Upload a chest X-ray image to begin analysis")
+            st.markdown(
+                "<div class='info-box'>Upload a chest X-ray image to begin analysis</div>",
+                unsafe_allow_html=True
+            )
             return
 
         image_bytes = uploaded_file.read()
@@ -166,21 +173,28 @@ def main():
             )
 
         if detected:
-            st.markdown("**Predicted Diseases**")
+            st.markdown(
+                "<h3 style='color:#22c55e; font-weight:700;'>Detected Abnormal Findings</h3>",
+                unsafe_allow_html=True
+            )
+
             for d in detected:
                 st.markdown(
                     f"<div class='disease-badge'>{d['disease']}</div>",
                     unsafe_allow_html=True
                 )
         else:
-            st.info("No abnormal findings detected")
+            st.markdown(
+                "<div class='info-box'>No abnormal findings detected</div>",
+                unsafe_allow_html=True
+            )
 
         st.session_state.all_scores = all_scores
         st.session_state.thresholds = model.thresholds
         st.session_state.class_names = model.class_names
 
     # -------------------------------------------------------------------------
-    # NAVIGATION BUTTONS
+    # NAVIGATION
     # -------------------------------------------------------------------------
     st.divider()
     col1, col2, _ = st.columns([1, 1, 2])
@@ -242,13 +256,13 @@ def main():
         st.pyplot(fig)
 
 # =============================================================================
-# SESSION STATE
+# SESSION STATE INIT
 # =============================================================================
 if "view" not in st.session_state:
     st.session_state.view = None
 
 # =============================================================================
-# RUN APP
+# RUN
 # =============================================================================
 if __name__ == "__main__":
     main()
